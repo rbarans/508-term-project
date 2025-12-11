@@ -90,35 +90,69 @@ label, .stSelectbox label, .stNumberInput label {
     font-family: 'Bebas Neue', sans-serif !important;
 }
 
-/* THEMED VALLEY BUTTON */
-.stButton > button {
+/* FORCE STREAMLIT BUTTON CONTAINER TO BE WIDE */
+div.stButton {
+    display: flex;
+    justify-content: center;   /* center horizontally */
+    width: 100% !important;
+    margin-top: 20px;
+}
+
+/* THEMED VALLEY BUTTON - NOW WORKS HORIZONTALLY */
+div.stButton > button {
     background-image: url('https://raw.githubusercontent.com/rbarans/508-term-project/refs/heads/main/valley.jpg');
     background-size: cover;
-    background-position: center 40%;
+    background-position: center 38%;
     background-repeat: no-repeat;
 
-    width: 60% !important;
-    height: 60px !important;
-    margin-left: 20% !important;
-
+    width: 300px !important;       /* fixed horizontal size */
+    height: 60px !important;       /* prevents vertical stacking */
     border: 3px solid #C34023 !important;
     border-radius: 10px;
 
     color: white !important;
     font-family: 'Anton', sans-serif !important;
-    font-size: 28px !important;
+    font-size: 26px !important;
     letter-spacing: 3px;
 
     display: flex;
     justify-content: center;
     align-items: center;
+
     text-shadow: 2px 2px 5px #000;
 }
 
-.stButton > button:hover {
+div.stButton > button:hover {
     transform: scale(1.05);
-    transition: 0.1s ease-in-out;
+    transition: 0.15s ease;
 }
+
+/* FIX INPUT WIDTHS INSIDE COLUMNS */
+div[data-testid="column"] > div {
+    width: 100% !important;    /* force column to control width */
+}
+
+/* FIX NUMBER INPUT BORDERS WITHOUT BLEEDING */
+.stNumberInput > div:first-child {
+    border: 3px solid #7D344F !important;
+    border-radius: 8px !important;
+    background-color: #000 !important;
+}
+
+.stNumberInput input {
+    color: white !important;
+    font-family: 'Bebas Neue', sans-serif !important;
+}
+
+/* FIX SELECT BOX WIDTH */
+.stSelectbox > div > div {
+    border: 3px solid #7D344F !important;
+    border-radius: 8px !important;
+    background-color: #000 !important;
+    color: white !important;
+    font-family: 'Bebas Neue', sans-serif !important;
+}
+
 
 </style>
 """, unsafe_allow_html=True)
