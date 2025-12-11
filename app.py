@@ -12,7 +12,7 @@ st.set_page_config(page_title="Suns' Game Predictor", layout="centered")
 
 
 # -------------------------
-# CUSTOM FONTS + COLORS
+# CUSTOM FONTS + COLORS + FIXES
 # -------------------------
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -49,9 +49,9 @@ body {
     background-color: #0d0d0d;
     border: 4px solid #362B4D !important;
     box-shadow: 0 0 25px #5C2E52;
-    padding: 25px 30px;
+    padding: 30px;
     border-radius: 12px;
-    margin-top: 25px;
+    margin-top: 30px;
 }
 
 /* Labels */
@@ -71,7 +71,12 @@ label, .stSelectbox label, .stNumberInput label {
     margin-bottom: 12px;
 }
 
-/* CLEAN INPUT BORDER */
+/* FIX INPUT WIDTHS INSIDE COLUMNS */
+div[data-testid="column"] > div {
+    width: 100% !important;
+}
+
+/* CLEAN NUMBER INPUT BORDER */
 .stNumberInput > div:first-child {
     border: 3px solid #7D344F !important;
     border-radius: 8px !important;
@@ -82,6 +87,7 @@ label, .stSelectbox label, .stNumberInput label {
     font-family: 'Bebas Neue', sans-serif !important;
 }
 
+/* CLEAN SELECT BORDER */
 .stSelectbox > div > div {
     border: 3px solid #7D344F !important;
     border-radius: 8px !important;
@@ -90,23 +96,23 @@ label, .stSelectbox label, .stNumberInput label {
     font-family: 'Bebas Neue', sans-serif !important;
 }
 
-/* FORCE STREAMLIT BUTTON CONTAINER TO BE WIDE */
+/* BUTTON CONTAINER FIX */
 div.stButton {
     display: flex;
-    justify-content: center;   /* center horizontally */
+    justify-content: center;
     width: 100% !important;
-    margin-top: 20px;
 }
 
-/* THEMED VALLEY BUTTON - NOW WORKS HORIZONTALLY */
+/* THEMED VALLEY BUTTON (NOW HORIZONTAL + CENTERED) */
 div.stButton > button {
     background-image: url('https://raw.githubusercontent.com/rbarans/508-term-project/refs/heads/main/valley.jpg');
     background-size: cover;
-    background-position: center 38%;
+    background-position: center 40%;
     background-repeat: no-repeat;
 
-    width: 300px !important;       /* fixed horizontal size */
-    height: 60px !important;       /* prevents vertical stacking */
+    width: 300px !important;
+    height: 60px !important;
+
     border: 3px solid #C34023 !important;
     border-radius: 10px;
 
@@ -124,35 +130,8 @@ div.stButton > button {
 
 div.stButton > button:hover {
     transform: scale(1.05);
-    transition: 0.15s ease;
+    transition: 0.15s ease-in-out;
 }
-
-/* FIX INPUT WIDTHS INSIDE COLUMNS */
-div[data-testid="column"] > div {
-    width: 100% !important;    /* force column to control width */
-}
-
-/* FIX NUMBER INPUT BORDERS WITHOUT BLEEDING */
-.stNumberInput > div:first-child {
-    border: 3px solid #7D344F !important;
-    border-radius: 8px !important;
-    background-color: #000 !important;
-}
-
-.stNumberInput input {
-    color: white !important;
-    font-family: 'Bebas Neue', sans-serif !important;
-}
-
-/* FIX SELECT BOX WIDTH */
-.stSelectbox > div > div {
-    border: 3px solid #7D344F !important;
-    border-radius: 8px !important;
-    background-color: #000 !important;
-    color: white !important;
-    font-family: 'Bebas Neue', sans-serif !important;
-}
-
 
 </style>
 """, unsafe_allow_html=True)
@@ -172,8 +151,7 @@ st.markdown("""
 
 
 # -------------------------
-# EXPLANATION LOGIC
-# (Identical behavior to your Flask version)
+# MODEL EXPLANATION LOGIC
 # -------------------------
 def generate_explanation(features, prob):
     opp = features["opponent"]
@@ -184,82 +162,69 @@ def generate_explanation(features, prob):
     orr = features["opp_rest"]
 
     explanation = []
-
-    # WIN/LOSS intro
     explanation.append(
         "The model predicts a WIN primarily because:" if prob >= 0.5
         else "The model predicts a LOSS because:"
     )
 
-    # Opponent streak
     if os_ >= 3:
-        explanation.append(f"The opponent is on a strong positive streak (+{os_}), heavily reducing Suns chances.")
+        explanation.append(f"The opponent is on a strong positive streak (+{os_}), which reduces Suns probability.")
     elif os_ == 2:
-        explanation.append("The opponent has a +2 streak, which slightly reduces Suns win probability.")
+        explanation.append("The opponent has a +2 streak, which slightly reduces Suns chances.")
     elif os_ == 1:
-        explanation.append("The opponent has a mild +1 winning streak.")
+        explanation.append("The opponent has mild momentum (+1).")
     elif os_ <= -2:
         explanation.append(f"The opponent is struggling (streak {os_}), increasing Suns chances.")
     elif os_ == -1:
-        explanation.append("The opponent has a small losing streak, slightly benefiting the Suns.")
+        explanation.append("The opponent is on a small losing streak.")
 
-    # Suns streak
     if ss >= 2:
-        explanation.append(f"The Suns are on a +{ss} streak, helping the prediction.")
+        explanation.append(f"The Suns are on a +{ss} streak, boosting the prediction.")
     elif ss == 1:
-        explanation.append("The Suns enter with +1 momentum.")
+        explanation.append("The Suns enter with slight positive momentum (+1).")
     elif ss <= -1:
-        explanation.append(f"The Suns have a losing streak ({ss}), pulling the prediction toward a loss.")
+        explanation.append(f"The Suns have a losing streak ({ss}), pushing prediction downward.")
 
-    # Rest days
     rest_diff = sr - orr
     if sr >= 3:
-        explanation.append(
-            f"The Suns have {sr} rest days — historically long rest (3+) correlates with lower win probability."
-        )
+        explanation.append(f"The Suns have {sr} rest days; historically 3+ rest days reduce win probability.")
     elif rest_diff > 0:
-        explanation.append(f"The Suns have a slight rest advantage ({sr} vs {orr}).")
+        explanation.append(f"The Suns have more rest ({sr} vs {orr}).")
     elif rest_diff == 0:
         explanation.append("Both teams have equal rest.")
     else:
-        explanation.append(f"The opponent has more rest ({orr} vs {sr}), slightly reducing Suns chances.")
+        explanation.append(f"The opponent has more rest ({orr} vs {sr}).")
 
-    # Location
     if loc == "Home":
-        explanation.append("Home-court provides a small benefit.")
+        explanation.append("Home-court advantage slightly helps the Suns.")
     else:
-        explanation.append("Playing away slightly lowers Suns win probability.")
+        explanation.append("Playing away slightly lowers Suns chances.")
 
-    # Filter explanation depending on WIN vs LOSS
     if prob >= 0.5:
-        cleaned = [explanation[0]]
+        keep = [explanation[0]]
         for line in explanation[1:]:
-            if any(w in line.lower() for w in ["loss", "losing", "reduces", "lower"]):
-                continue
-            cleaned.append(line)
-        if len(cleaned) == 1:
-            cleaned.append("Several factors modestly support the Suns in this matchup.")
-        explanation = cleaned
+            if not any(w in line.lower() for w in ["loss", "reduces", "lower"]):
+                keep.append(line)
+        if len(keep) == 1:
+            keep.append("Several factors modestly support a Suns win.")
+        return keep
 
     else:
-        cleaned = [explanation[0]]
+        keep = [explanation[0]]
         for line in explanation[1:]:
-            if any(w in line.lower() for w in ["loss", "losing", "reduces", "lower"]):
-                cleaned.append(line)
-        if len(cleaned) == 1:
-            cleaned.append("Several factors tilt the model toward a loss.")
-        explanation = cleaned
-
-    return explanation
+            if any(w in line.lower() for w in ["loss", "reduces", "lower"]):
+                keep.append(line)
+        if len(keep) == 1:
+            keep.append("Several factors tilt the prediction toward a loss.")
+        return keep
 
 
 
 # -------------------------
-# MAIN CARD CONTENT
+# INPUT CARD
 # -------------------------
 st.markdown("<div class='main-card'>", unsafe_allow_html=True)
 st.subheader("Game Inputs")
-
 
 col1, col2 = st.columns(2)
 
