@@ -12,15 +12,16 @@ st.set_page_config(page_title="Suns' Game Predictor", layout="centered")
 
 
 # -------------------------
-# CUSTOM FONTS + COLORS + FIXES
+# GLOBAL CSS (Background, Fonts, Inputs, Button Fixes)
 # -------------------------
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&display=swap" rel="stylesheet">
 
 <style>
 
-body {
-    background-color: #000000;
+/* True black background everywhere */
+.stApp, body, .block-container {
+    background-color: #000000 !important;
 }
 
 /* HEADER IMAGE */
@@ -28,7 +29,6 @@ body {
     width: 100%;
     height: 380px;
     object-fit: cover;
-    border-bottom: 3px solid #362B4D;
 }
 
 /* TITLE OVERLAY */
@@ -40,54 +40,50 @@ body {
     font-family: 'Anton', sans-serif;
     font-size: 70px;
     color: white;
-    text-shadow: 4px 4px 10px #000;
+    text-shadow: 4px 4px 12px #000;
     letter-spacing: 4px;
 }
 
-/* Main card container */
+/* REMOVE PURPLE BOX AROUND INPUTS */
 .main-card {
-    background-color: #0d0d0d;
-    border: 4px solid #362B4D !important;
-    box-shadow: 0 0 25px #5C2E52;
-    padding: 30px;
-    border-radius: 12px;
-    margin-top: 30px;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px 0;
 }
 
-/* Labels */
-label, .stSelectbox label, .stNumberInput label {
+/* LABEL STYLE */
+label, .stSelectbox label, .stTextInput label {
     font-family: 'Anton', sans-serif !important;
     font-size: 22px !important;
     color: #F0B940 !important;
 }
 
-/* Sublabels */
+/* SUBLABEL STYLE */
 .sublabel {
     font-size: 14px;
     font-family: Arial, sans-serif;
     color: #CCCCCC;
     opacity: 0.75;
-    margin-top: -8px;
+    margin-top: -6px;
     margin-bottom: 12px;
 }
 
-/* FIX INPUT WIDTHS INSIDE COLUMNS */
+/* FIX COLUMN WIDTHS */
 div[data-testid="column"] > div {
     width: 100% !important;
 }
 
-/* CLEAN NUMBER INPUT BORDER */
-.stNumberInput > div:first-child {
+/* TEXT INPUT BORDER */
+.stTextInput > div > input {
     border: 3px solid #7D344F !important;
     border-radius: 8px !important;
     background-color: #000 !important;
-}
-.stNumberInput input {
     color: white !important;
     font-family: 'Bebas Neue', sans-serif !important;
 }
 
-/* CLEAN SELECT BORDER */
+/* SELECT BORDER */
 .stSelectbox > div > div {
     border: 3px solid #7D344F !important;
     border-radius: 8px !important;
@@ -96,18 +92,26 @@ div[data-testid="column"] > div {
     font-family: 'Bebas Neue', sans-serif !important;
 }
 
+/* NUMBER INPUT BORDER (rest days only) */
+.stNumberInput > div:first-child {
+    border: 3px solid #7D344F !important;
+    border-radius: 8px !important;
+    background-color: #000 !important;
+}
+
 /* BUTTON CONTAINER FIX */
 div.stButton {
     display: flex;
     justify-content: center;
     width: 100% !important;
+    margin-top: 20px;
 }
 
-/* THEMED VALLEY BUTTON (NOW HORIZONTAL + CENTERED) */
+/* VALLEY THEMED BUTTON — NOW SCALES CORRECTLY */
 div.stButton > button {
     background-image: url('https://raw.githubusercontent.com/rbarans/508-term-project/refs/heads/main/valley.jpg');
     background-size: cover;
-    background-position: center 40%;
+    background-position: center 38%;
     background-repeat: no-repeat;
 
     width: 300px !important;
@@ -137,9 +141,8 @@ div.stButton > button:hover {
 """, unsafe_allow_html=True)
 
 
-
 # -------------------------
-# HEADER IMAGE + TITLE
+# HEADER SECTION
 # -------------------------
 st.markdown("""
 <div style="position: relative; text-align: center;">
@@ -149,9 +152,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-
 # -------------------------
-# MODEL EXPLANATION LOGIC
+# EXPLANATION LOGIC (same as Flask version)
 # -------------------------
 def generate_explanation(features, prob):
     opp = features["opponent"]
@@ -162,80 +164,81 @@ def generate_explanation(features, prob):
     orr = features["opp_rest"]
 
     explanation = []
-    explanation.append(
-        "The model predicts a WIN primarily because:" if prob >= 0.5
-        else "The model predicts a LOSS because:"
-    )
+    explanation.append("The model predicts a WIN primarily because:" if prob >= 0.5
+                       else "The model predicts a LOSS because:")
 
     if os_ >= 3:
-        explanation.append(f"The opponent is on a strong positive streak (+{os_}), which reduces Suns probability.")
+        explanation.append(f"Opponent on a strong winning streak (+{os_}), historically lowering Suns chances.")
     elif os_ == 2:
-        explanation.append("The opponent has a +2 streak, which slightly reduces Suns chances.")
+        explanation.append("Opponent has a +2 streak, slightly reducing Suns probability.")
     elif os_ == 1:
-        explanation.append("The opponent has mild momentum (+1).")
+        explanation.append("Opponent holds mild momentum (+1).")
     elif os_ <= -2:
-        explanation.append(f"The opponent is struggling (streak {os_}), increasing Suns chances.")
+        explanation.append(f"Opponent is struggling (streak {os_}), increasing Suns probability.")
     elif os_ == -1:
-        explanation.append("The opponent is on a small losing streak.")
+        explanation.append("Opponent has a small losing streak.")
 
     if ss >= 2:
-        explanation.append(f"The Suns are on a +{ss} streak, boosting the prediction.")
+        explanation.append(f"Suns on a +{ss} streak, boosting the prediction.")
     elif ss == 1:
-        explanation.append("The Suns enter with slight positive momentum (+1).")
+        explanation.append("Suns enter with mild momentum (+1).")
     elif ss <= -1:
-        explanation.append(f"The Suns have a losing streak ({ss}), pushing prediction downward.")
+        explanation.append(f"Suns losing streak ({ss}) lowers probability.")
 
     rest_diff = sr - orr
     if sr >= 3:
-        explanation.append(f"The Suns have {sr} rest days; historically 3+ rest days reduce win probability.")
+        explanation.append(f"{sr} rest days — long rest historically correlates with lower win probability.")
     elif rest_diff > 0:
-        explanation.append(f"The Suns have more rest ({sr} vs {orr}).")
+        explanation.append(f"Suns have more rest ({sr} vs {orr}).")
     elif rest_diff == 0:
         explanation.append("Both teams have equal rest.")
     else:
-        explanation.append(f"The opponent has more rest ({orr} vs {sr}).")
+        explanation.append(f"Opponent has more rest ({orr} vs {sr}).")
 
     if loc == "Home":
-        explanation.append("Home-court advantage slightly helps the Suns.")
+        explanation.append("Home court provides a small advantage.")
     else:
-        explanation.append("Playing away slightly lowers Suns chances.")
+        explanation.append("Away games slightly reduce probability.")
 
+    # WIN filter
     if prob >= 0.5:
-        keep = [explanation[0]]
+        cleaned = [explanation[0]]
         for line in explanation[1:]:
-            if not any(w in line.lower() for w in ["loss", "reduces", "lower"]):
-                keep.append(line)
-        if len(keep) == 1:
-            keep.append("Several factors modestly support a Suns win.")
-        return keep
+            if not any(w in line.lower() for w in ["loss", "lower", "reduces"]):
+                cleaned.append(line)
+        if len(cleaned) == 1:
+            cleaned.append("Several factors modestly support a Suns win.")
+        return cleaned
 
+    # LOSS filter
     else:
-        keep = [explanation[0]]
+        cleaned = [explanation[0]]
         for line in explanation[1:]:
-            if any(w in line.lower() for w in ["loss", "reduces", "lower"]):
-                keep.append(line)
-        if len(keep) == 1:
-            keep.append("Several factors tilt the prediction toward a loss.")
-        return keep
-
+            if any(w in line.lower() for w in ["loss", "lower", "reduces"]):
+                cleaned.append(line)
+        if len(cleaned) == 1:
+            cleaned.append("Several factors tilt the model toward a loss.")
+        return cleaned
 
 
 # -------------------------
-# INPUT CARD
+# INPUT FORM
 # -------------------------
 st.markdown("<div class='main-card'>", unsafe_allow_html=True)
 st.subheader("Game Inputs")
 
 col1, col2 = st.columns(2)
 
+# LEFT COLUMN
 with col1:
     location = st.selectbox("Location", ["Home", "Away"])
 
-    suns_streak = st.number_input("Suns' Streak", step=1)
+    suns_streak_raw = st.text_input("Suns' Streak", value="", placeholder="e.g., -2 or 3")
     st.markdown('<div class="sublabel">Losses represented with (-)</div>', unsafe_allow_html=True)
 
     suns_rest = st.number_input("Suns’ Rest Days", min_value=1, step=1)
 
+# RIGHT COLUMN
 with col2:
     opponent = st.selectbox("Opponent", [
         "ATL","BOS","BRK","CHI","CHO","CLE","DAL","DEN","DET","GSW",
@@ -243,27 +246,34 @@ with col2:
         "OKC","ORL","PHI","POR","SAC","SAS","TOR","UTA","WAS"
     ])
 
-    opp_streak = st.number_input("Opponent Streak", step=1)
+    opp_streak_raw = st.text_input("Opponent Streak", value="", placeholder="e.g., -1 or 4")
     st.markdown('<div class="sublabel">Losses represented with (-)</div>', unsafe_allow_html=True)
 
     opp_rest = st.number_input("Opponent Rest Days", min_value=1, step=1)
 
-predict_button = st.button("PREDICT")
+predict_pressed = st.button("PREDICT")
 st.markdown("</div>", unsafe_allow_html=True)
 
 
+# -------------------------
+# ON PREDICT CLICK
+# -------------------------
+if predict_pressed:
 
-# -------------------------
-# MODEL CALL + RESULTS
-# -------------------------
-if predict_button:
+    # Convert streak strings → integers
+    try:
+        suns_streak = int(suns_streak_raw)
+        opp_streak = int(opp_streak_raw)
+    except:
+        st.error("Please enter valid streak values (e.g., -2, 0, 3).")
+        st.stop()
 
     payload = {
         "dataframe_records": [{
             "opponent": opponent,
             "location": location,
-            "suns_streak": int(suns_streak),
-            "opp_streak": int(opp_streak),
+            "suns_streak": suns_streak,
+            "opp_streak": opp_streak,
             "suns_rest": int(suns_rest),
             "opp_rest": int(opp_rest),
         }]
@@ -273,20 +283,19 @@ if predict_button:
         r = requests.post(
             ENDPOINT_URL,
             headers={
-                "Authorization": f"Bearer {DATABRICKS_TOKEN}",
+                "Authorization": f"Bearer " + DATABRICKS_TOKEN,
                 "Content-Type": "application/json",
             },
             json=payload
         )
-        db_output = r.json()
-        prob = db_output["predictions"][0]
+        prob = r.json()["predictions"][0]
 
-    prediction = "WIN" if prob >= 0.5 else "LOSS"
-    color = "#f3d221" if prediction == "WIN" else "#e0357f"
+    result = "WIN" if prob >= 0.5 else "LOSS"
+    color = "#f3d221" if result == "WIN" else "#e0357f"
 
     st.markdown(f"""
         <h2 style='color:{color}; font-family:Anton; text-shadow:2px 2px 5px #000;'>
-            Suns {prediction}!
+            Suns {result}!
         </h2>
         <div style='color:white; font-family:Bebas Neue; font-size:24px;'>
             Win Probability: {prob:.3f}
